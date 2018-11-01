@@ -33,7 +33,7 @@ function getEmitter() {
          * @param {Function} handler
          * @returns {Object}
          */
-        on: function (event, context, handler) {// если понадобится проверь параметры
+        on: function (event, context, handler) { // если понадобится проверь параметры
             let newStudent = { context: context, handler: handler };
             if (!eventHandlers[event]) {
                 eventHandlers[event] = [newStudent];
@@ -52,7 +52,7 @@ function getEmitter() {
          */
         off: function (event, context) {
             let eventCleaner = getOff(event);
-            for (let eventName of eventCleaner) {// xm
+            for (let eventName of eventCleaner) { // xm
                 eventHandlers[eventName] = eventHandlers[eventName].filter(element => {
                     return element.context !== context;
                 });
