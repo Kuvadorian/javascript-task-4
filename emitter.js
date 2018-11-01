@@ -11,16 +11,16 @@ const isStar = false;
  * @returns {Object}
  */
 function getEmitter() {
-    let eventHandlers = [];
+    let eventHandlers = {};
 
     function getOff(event) {
         return Object.keys(eventHandlers).filter(eventName => eventName === event ||
-        eventName.startsWith(event + '.'));
+            eventName.startsWith(event + '.'));
     }
 
     function getEmit(event) {
         return Object.keys(eventHandlers).filter(eventName => eventName === event ||
-        event.startsWith(eventName + '.'))
+            event.startsWith(eventName + '.'))
             .reverse();
     }
 
@@ -33,11 +33,13 @@ function getEmitter() {
          * @param {Function} handler
          * @returns {Object}
          */
-        on: function (event, context, handler) {
+        on: function (event, context, handler) {// если понадобится проверь параметры
+            let newStudent = { context: context, handler: handler };
             if (!eventHandlers[event]) {
-                eventHandlers[event] = [];
+                eventHandlers[event] = [newStudent];
+            } else {
+                eventHandlers[event].push(newStudent);
             }
-            eventHandlers[event].push({ context, handler });
 
             return this;
         },
@@ -50,7 +52,7 @@ function getEmitter() {
          */
         off: function (event, context) {
             let eventCleaner = getOff(event);
-            for (let eventName of eventCleaner) {
+            for (let eventName of eventCleaner) {// xm
                 eventHandlers[eventName] = eventHandlers[eventName].filter(element => {
                     return element.context !== context;
                 });
@@ -66,25 +68,16 @@ function getEmitter() {
          */
         emit: function (event) {
             let eventReporter = getEmit(event);
-            console.info(event);
-            console.info(eventReporter);
             eventReporter.forEach(element => {
                 if (eventHandlers[element]) {
                     eventHandlers[element].forEach(element2 => {
                         element2.handler.call(element2.context);
                     });
                 }
-                console.info('wow');
-                console.info(eventHandlers.begin[0]);
             });
 
             return this;
-
-
-            /* for (let element of Object.values(eventHandlers[event])) {
-                element.handler.call(element.context);
-            }*/
-        }
+        },
 
         /**
          * Подписаться на событие с ограничением по количеству полученных уведомлений
@@ -93,9 +86,13 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} times – сколько раз получить уведомление
+         * @returns {Object}
          */
-        /* several: function (event, context, handler, times) {
+        several: function (event, context, handler, times) {
+            console.info('several');
             console.info(event, context, handler, times);
+
+            return this;
         },
 
         /**
@@ -105,10 +102,14 @@ function getEmitter() {
          * @param {Object} context
          * @param {Function} handler
          * @param {Number} frequency – как часто уведомлять
+         * @returns {Object}
          */
-        /* through: function (event, context, handler, frequency) {
+        through: function (event, context, handler, frequency) {
+            console.info('through');
             console.info(event, context, handler, frequency);
-        }*/
+
+            return this;
+        }
     };
 }
 
