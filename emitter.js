@@ -11,25 +11,25 @@ const isStar = true;
  * @returns {Object}
  */
 function getEmitter() {
-    let eventHandlers = {};
+    const eventHandlers = {};
+    const hasEvent = (event, event1) => event === event1;
+    const beginWith = (event, event1) => event.startsWith(event1 + '.');
 
-    function getOff(event) {
-        return Object.keys(eventHandlers).filter(eventName => eventName === event ||
-            eventName.startsWith(event + '.'));
+    function getOffEvents(event) {
+        return Object.keys(eventHandlers)
+            .filter(eventName => hasEvent(eventName, event) || beginWith(eventName, event));
     }
 
-    function getEmit(event) {
-        return Object.keys(eventHandlers).filter(eventName => eventName === event ||
-            event.startsWith(eventName + '.'))
-            .reverse();
+    function getEmittingEvents(event) {
+        return Object.keys(eventHandlers)
+            .filter(eventName => hasEvent(eventName, event) || beginWith(event, eventName));
     }
 
     function addStudent(event, newStudent) {
         if (!eventHandlers[event]) {
-            eventHandlers[event] = [newStudent];
-        } else {
-            eventHandlers[event].push(newStudent);
+            eventHandlers[event] = [];
         }
+        eventHandlers[event].push(newStudent);
     }
 
     function callFunction(record) {
@@ -41,7 +41,7 @@ function getEmitter() {
     }
 
     function checkForSeveral(record) {
-        return record.times && record.times !== 0;
+        return record.times;
     }
 
     function checkForThrough(record) {
@@ -55,6 +55,16 @@ function getEmitter() {
         return false;
     }
 
+    function lengthSort(first, second) {
+        if (first.length < second.length) {
+            return 1;
+        } else if (first.length > second.length) {
+            return -1;
+        }
+
+        return 0;
+    }
+
     return {
 
         /**
@@ -65,7 +75,8 @@ function getEmitter() {
          * @returns {Object}
          */
         on: function (event, context, handler) { // если понадобится проверь параметры
-            let newStudent = { context: context, handler: handler };
+            const newStudent = { context, handler };
+
             addStudent(event, newStudent);
 
             return this;
@@ -78,11 +89,11 @@ function getEmitter() {
          * @returns {Object}
          */
         off: function (event, context) {
-            let eventCleaner = getOff(event);
-            for (let eventName of eventCleaner) {
-                eventHandlers[eventName] = eventHandlers[eventName].filter(element => {
-                    return element.context !== context;
-                });
+            const eventsToСlear = getOffEvents(event);
+
+            for (let eventName of eventsToСlear) {
+                eventHandlers[eventName] = eventHandlers[eventName]
+                    .filter(element => element.context !== context);
             }
 
             return this;
@@ -94,27 +105,25 @@ function getEmitter() {
          * @returns {Object}
          */
         emit: function (event) {
-            let eventReporter = getEmit(event);
-            console.info(eventReporter + 'hey');
-            eventReporter.forEach(element => {
-                eventHandlers[element].forEach(element2 => {
-                    console.info(element2);
-                    if (event === 'begin' || !hasExtraProperties(element2)) {
-                        console.info('Просто');
-                        callFunction(element2);
+            const eventReporter = getEmittingEvents(event)
+                .sort(lengthSort);
+
+            eventReporter.forEach(eventName => {
+                eventHandlers[eventName].forEach(record => {
+                    if (!hasExtraProperties(record)) {
+                        callFunction(record);
 
                         return;
                     }
-                    if (checkForSeveral(element2)) {
-                        callFunction(element2);
-                        console.info('times');
-                        element2.times--;
+                    if (checkForSeveral(record)) {
+                        callFunction(record);
+                        record.times--;
 
                         return;
                     }
-                    if (checkForThrough(element2)) {
-                        callFunction(element2);
-                        element2.numberCalls++;
+                    if (checkForThrough(record)) {
+                        callFunction(record);
+                        record.numberCalls++;
                     }
                 });
             });
@@ -132,7 +141,8 @@ function getEmitter() {
          * @returns {Object}
          */
         several: function (event, context, handler, times) {
-            let newStudent = { context: context, handler: handler, times: times };
+            const newStudent = { context, handler, times };
+
             addStudent(event, newStudent);
 
             return this;
@@ -148,10 +158,8 @@ function getEmitter() {
          * @returns {Object}
          */
         through: function (event, context, handler, frequency) {
-            let newStudent = {
-                context: context, handler: handler,
-                frequency: frequency, numberCalls: 0
-            };
+            const newStudent = { context, handler, frequency, numberCalls: 0 };
+
             addStudent(event, newStudent);
 
             return this;
